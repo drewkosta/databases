@@ -1,0 +1,20 @@
+{
+  "name": "client",
+  "version": "0.0.0",
+  "homepage": "https://github.com/seanng/2016-07-chatterbox-server",
+  "authors": [
+    "Hack Reactor Students <accounts@hackreactor.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "client/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~3.1.0"
+  }
+}
