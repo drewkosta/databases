@@ -1,9 +1,5 @@
 var db = require('../db');
-// var app = require('../app');
-// var bodyParser = require('body-parser');
-// // app.app.use(bodyParser.json());
-// console.log('app', app)
-
+var request = require('request');
 
 var headers = {
   'access-control-allow-origin': '*',
@@ -13,6 +9,16 @@ var headers = {
   'Content-Type': 'application/json'
 };
 
+request({
+  method: 'POST',
+  uri: 'http://127.0.0.1:3000/classes/messages',
+  json: {
+    username: 'Valjean',
+    text: 'In mercy\'s name, three days is all I need.',
+    roomname: 'Hello'
+  }
+}, function (err, data) {
+});
 
 module.exports = {
   messages: {
@@ -30,96 +36,84 @@ module.exports = {
     },
     post: function (req, res) {
       var message = '';
-      // console.log('req',req)
-      req.on('data', function(chunk) {
-        // console.log('chunk', JSON.parse(chunk));
-        message += chunk;
-      });
-      req.on('end', function() {
-        // console.log(req.params)
-        var messageObj = JSON.parse(message);
-        console.log(messageObj);
-        //roomname, username, text
-        
-        //username=anonymous&text=daddad&roomname=lobby
-        // var queryForUsers = 'SELECT * FROM rooms';
-        // db.query(queryForUsers, [], function(err, data) {
-        //   console.log('got user table!', data);
-        // });
-        console.log(messageObj.username, messageObj.roomname);
+      var messageObj = req.body;
 
-        var queryForIds = 'SELECT r.id as room_id, u.id as user_id FROM rooms r, users u WHERE u.name = "' + messageObj.username + '" and r.name = "' + messageObj.roomname + '";';
-        db.query(queryForIds, [], function(err, data) {
+      req.on('data', function(chunk) {
+        message += chunk;
+        messageObj = JSON.parse(message);
+      });
+
+      var queryForUserId = 'SELECT u.id as user_id FROM users u WHERE u.name = "' + messageObj.username + '";';
+
+      var queryForRoomId = 'SELECT r.id as room_id FROM rooms r WHERE r.name = "' + messageObj.roomname + '";';
+
+      var queryAddUsers = 'INSERT INTO users (name) values ("' + messageObj.username + '");';
+
+      var queryAddRooms = 'INSERT INTO rooms (name) values ("' + messageObj.roomname + '");';
+      var queryInsertMessageString = 'INSERT INTO messages (user_id, room_id, text) values ((SELECT id from users where name = "' + messageObj.username + '"), (SELECT id from rooms where name = "' + messageObj.roomname + '"), "' + messageObj.text + '")';
+      
+      var insertMessage = function(res) {
+        return db.query(queryInsertMessageString, function(err, data) {
           if (err) {
-            console.log(err);
           } else {
-            console.log('got ids!', data);
+            res.writeHead(201, headers);
+            res.end('done!');
           }
         });
+      };
 
-        // var parsedMessage = JSON.parse(message);
-        // console.log('parsedmessage', parsedMessage);
+      var insertNewMessage = function() {
+        db.query(queryForUserId, [], function(err, data) {
+          if (err) {
+          } else {
+            if (data.length === 0) {
+              db.query(queryAddUsers, [], function(err, data) {
+                insertMessage(res);
+              });
+            } else {
+              db.query(queryForRoomId, [], function(err, data) {
+                if (err) {
+                } else {
+                  if (data.length === 0) {
+                    db.query(queryAddRooms, [], function(err, data) {
+                      insertMessage(res);
+                    });
+                  } else {
+                    insertMessage(res);
+                  }
+                }
+              });
+            }
+          }
+        });
+      };
 
+      req.on('end', function() {
+        insertNewMessage();
       });
-      
-      // var queryForIds = 'SELECT r.id, u.id FROM rooms r, users u, messages m WHERE m.username = ' + parsedMessage
-      // var queryString = 'INSERT INTO messages (text, user_id, room_id) values ((';
 
-
-
-      // db.query(queryString, [], function(err, data) {
-      //   console.log('data', data);
-      //   if (err) {
-      //     res.writeHead(404, headers);
-      //     res.end(err);
-      //   } else {
-      //     console.log(data);
-      //     res.writeHead(200, headers);
-      //     res.end(JSON.stringify(data));
-      //   }
-      // });
-
-      // res.writeHead(201, headers);
-      // res.end();
-
-
-    }
-  },
-
-  users: {
-    get: function (req, res) {
-      var queryString = 'SELECT * FROM users';
-      db.query(queryString, [], function(err, data) {
-        console.log('data', data);
-        if (err) {
-          res.end(err);
-        } else {
-          console.log(data);
-          res.end(data);
-        }
-      });
+      insertNewMessage();
     },
-    post: function (req, res) {
-    
+
+    users: {
+      get: function (req, res) {
+        var queryString = 'SELECT * FROM users';
+        db.query(queryString, [], function(err, data) {
+          if (err) {
+            res.end(err);
+          } else {
+            res.end(data);
+          }
+        });
+      },
+      post: function (req, res) {
+        var user = '';
+        var userObj = user;
+        var queryAddUserString = 'INSERT INTO users (name) values ("' + req.body.username + '");';
+        db.query(queryAddUserString, [], function (err, data) {
+          res.end();
+        });
+      }
     }
   }
 };
-
-// module.exports.messages.get();
-
-// var tablename = 'messages'; // TODO: fill this out
-
-//     dbConnection.query('truncate ' + tablename, done);
-
-    // dbConnection.query(queryString, queryArgs, function(err) {
-    //   if (err) { throw err; }
-
-    //   // Now query the Node chat server and see if it returns
-    //   // the message we just inserted:
-    //   request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
-    //     var messageLog = JSON.parse(body);
-    //     expect(messageLog[0].text).to.equal('Men like you can never change!');
-    //     expect(messageLog[0].roomname).to.equal('main');
-    //     done();
-    //   });
-    // });

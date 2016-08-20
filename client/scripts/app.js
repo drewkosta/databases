@@ -3,8 +3,8 @@ var app = {
   //TODO: The current 'handleUsernameClick' function just toggles the class 'friend'
   //to all messages sent by the user
   server: 'http://127.0.0.1:3000/classes/messages',
-  username: 'uzrrr',
-  roomname: 'rmmmz',
+  username: 'drew',
+  roomname: 'hehehehe',
   messages: [],
   lastMessageId: 0,
   friends: {},
@@ -40,7 +40,6 @@ var app = {
         order: '-createdAt'
       },
       success: function(data) {
-        console.log(data);
         // data = JSON.parse(data);
         if (!data || !data.length) { return; }
         app.messages = data;
@@ -50,11 +49,8 @@ var app = {
           app.renderMessages(app.messages);
           app.renderRoomList(app.messages);
         }
-        console.log('messages', app.messages)
       },
       error: function(error, b, c) {
-        console.error('fetch fails', error);
-        console.error(b, c);
       }
     });
   },
@@ -99,32 +95,30 @@ var app = {
   },
 
   handleSubmit: function(event) {
+    event.preventDefault();
 
     var message = {
       username: app.username,
       text: app.$message.val(),
       roomname: app.roomname || 'lobby'
     };
-    console.log('mess', message);
+    message = JSON.stringify(message);
     app.send(message);
 
-    event.preventDefault();
   },
 
   send: function(message) {
-    console.log('in send', JSON.stringify(message));
 
     $.ajax({
       url: app.server,
       type: 'POST',
-      data: JSON.stringify(message),
+      data: (message),
+      // dataType: 'json',
       success: function(data) {
-        console.log('success')
         app.$message.val('');
         app.fetch();
       },
       error: function(error, b, c) {
-        console.error('could not send message', error, b, c);
       }
     });
   },

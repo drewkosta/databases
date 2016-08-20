@@ -6,7 +6,6 @@ module.exports = {
       models.messages.get(req, res);
     },
     post: function (req, res) {
-      console.log('request body', req.body);
       models.messages.post(req, res);
     }
   },

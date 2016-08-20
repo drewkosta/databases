@@ -16,9 +16,14 @@ app.set('port', 3000);
 
 // Logging and parsing
 app.use(morgan('dev'));
-app.use(parser.json());
 
+// app.use(parser.urlencoded({
+//   extended: true
+// }));
+
+app.use(parser.json());
 // Set up our routes
+// router(app);
 app.use('/classes', router);
 
 // Serve the client files
